@@ -7,63 +7,17 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from ultralytics.nn.modules import (
-    AIFI,
-    C1,
-    C2,
-    C3,
-    C3TR,
-    OBB,
-    SPP,
-    SPPELAN,
-    SPPF,
-    ADown,
-    Bottleneck,
-    BottleneckCSP,
-    C2f,
-    C2fAttn,
-    C3Ghost,
-    C3x,
-    CBFuse,
-    CBLinear,
-    Classify,
-    Concat,
-    Conv,
-    Conv2,
-    ConvTranspose,
-    Detect,
-    DWConv,
-    DWConvTranspose2d,
-    Focus,
-    GhostBottleneck,
-    GhostConv,
-    HGBlock,
-    HGStem,
-    ImagePoolingAttn,
-    Pose,
-    RepC3,
-    RepConv,
-    RepNCSPELAN4,
-    ResNetLayer,
-    RTDETRDecoder,
-    Segment,
-    Silence,
-    WorldDetect,
-)
+from ultralytics.nn.modules import (AIFI, C1, C2, C3, C3TR, CBAM, OBB, SPP, SPPELAN, SPPF, ADown, Bottleneck,
+                                    BottleneckCSP, C2f, C2fAttn, C3Ghost, C3x, CBFuse, CBLinear, Classify, Concat, Conv,
+                                    Conv2, ConvTranspose, Detect, DWConv, DWConvTranspose2d, Focus, GhostBottleneck,
+                                    GhostConv, HGBlock, HGStem, ImagePoolingAttn, Pose, RepC3, RepConv, RepNCSPELAN4,
+                                    ResNetLayer, RTDETRDecoder, Segment, Silence, WorldDetect)
 from ultralytics.utils import DEFAULT_CFG_DICT, DEFAULT_CFG_KEYS, LOGGER, colorstr, emojis, yaml_load
 from ultralytics.utils.checks import check_requirements, check_suffix, check_yaml
 from ultralytics.utils.loss import v8ClassificationLoss, v8DetectionLoss, v8OBBLoss, v8PoseLoss, v8SegmentationLoss
 from ultralytics.utils.plotting import feature_visualization
-from ultralytics.utils.torch_utils import (
-    fuse_conv_and_bn,
-    fuse_deconv_and_bn,
-    initialize_weights,
-    intersect_dicts,
-    make_divisible,
-    model_info,
-    scale_img,
-    time_sync,
-)
+from ultralytics.utils.torch_utils import (fuse_conv_and_bn, fuse_deconv_and_bn, initialize_weights, intersect_dicts,
+                                           make_divisible, model_info, scale_img, time_sync)
 
 try:
     import thop
@@ -925,6 +879,11 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [c1, c2, *args[1:]]
         elif m is CBFuse:
             c2 = ch[f[-1]]
+        elif m is CBAM:
+            c1,c2 = ch[f],args[0]
+            if c2 != nc:
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, *args[1:]]
         else:
             c2 = ch[f]
 
